@@ -1,0 +1,73 @@
+{
+  "title": "BController",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Step 1 — Binance API Credentials",
+        "description": "Enter your Binance API Key and Secret.\n\nSetup guide:\n{setup_guide}\n\n⚠ Enable 'Spot Trading' ONLY. Never enable withdrawals.",
+        "data": {
+          "binance_api_key": "Binance API Key",
+          "binance_api_secret": "Binance API Secret"
+        }
+      },
+      "claude": {
+        "title": "Step 2 — Claude API Key",
+        "description": "Enter your Anthropic API Key.\n\nModel used: {model_id}\nEstimated cost: {estimated_cost}",
+        "data": {
+          "claude_api_key": "Claude API Key",
+          "claude_budget_usd": "Monthly budget (USD)"
+        }
+      },
+      "risk": {
+        "title": "Step 3 — Risk Parameters",
+        "description": "Configure stop-loss cascade and savings rate.\n\nL1 minimum: {l1_min}%  |  L4 minimum: {l4_min}%  |  Savings max: {savings_max}%\n\nStop-loss levels must be in order: L1 > L2 > L3 > L4 (all negative).",
+        "data": {
+          "stop_loss_l1": "L1 Trade Stop (%)",
+          "stop_loss_l2": "L2 Session Pause — 1h drawdown (%)",
+          "stop_loss_l3": "L3 Daily Halt — 24h drawdown (%)",
+          "stop_loss_l4": "L4 Emergency Stop — total drawdown (%)",
+          "savings_rate": "Savings Rate (% of profit)",
+          "cash_reserve_pct": "Cash Reserve (%)",
+          "poll_interval": "Poll Interval (seconds)",
+          "max_trade_usdt": "Max Trade Size (USDT)",
+          "pair_whitelist": "Trading Pair Whitelist (comma-separated)"
+        }
+      }
+    },
+    "error": {
+      "invalid_binance_key": "Invalid Binance API key. Check the key in Binance API Management.",
+      "invalid_binance_secret": "Invalid Binance API secret. Regenerate the key in Binance API Management.",
+      "cannot_connect": "Cannot connect to the API. Check your internet connection.",
+      "invalid_claude_key": "Invalid Anthropic API key. Check console.anthropic.com.",
+      "binance_unknown_error": "Unexpected Binance API error. See HA logs for details.",
+      "claude_unknown_error": "Unexpected Claude API error. See HA logs for details.",
+      "invalid_cascade_order": "Stop-loss levels must be in order: L1 > L2 > L3 > L4 (e.g. -3, -5, -8, -15).",
+      "stop_loss_too_tight": "Stop-loss value exceeds the allowed minimum. See description for limits."
+    },
+    "abort": {
+      "already_configured": "BController is already configured. Only one instance is supported."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "BController — Risk Parameters",
+        "description": "Update risk parameters. Changes take effect immediately after saving.",
+        "data": {
+          "stop_loss_l1": "L1 Trade Stop (%)",
+          "stop_loss_l2": "L2 Session Pause — 1h drawdown (%)",
+          "stop_loss_l3": "L3 Daily Halt — 24h drawdown (%)",
+          "stop_loss_l4": "L4 Emergency Stop — total drawdown (%)",
+          "savings_rate": "Savings Rate (% of profit)",
+          "cash_reserve_pct": "Cash Reserve (%)",
+          "poll_interval": "Poll Interval (seconds)",
+          "max_trade_usdt": "Max Trade Size (USDT)",
+          "pair_whitelist": "Trading Pair Whitelist (comma-separated)"
+        }
+      }
+    },
+    "error": {
+      "invalid_cascade_order": "Stop-loss levels must be in order: L1 > L2 > L3 > L4."
+    }
+  }
+}

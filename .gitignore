@@ -104,6 +104,7 @@ cover/
 .claude/token-cache/
 .claude/.cache/
 .claude/*.log
+.claude/token-config.json
 
 # =============================================================================
 # OS / editor
