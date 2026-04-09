@@ -170,6 +170,17 @@
     </div>
   </div>
   <p style="margin-top:1rem;color:var(--text-muted);">Levels konfigurierbar, aber mit Hard-Minimums: L1 min -2%, L4 min -10%. Komplett deaktivieren ist nicht moeglich.</p>
+  <div style="margin-top:1rem;padding:0.75rem;background:rgba(248,81,73,0.08);border-radius:6px;border:1px solid rgba(248,81,73,0.2);">
+    <strong style="color:var(--red);">Wave 0 Findings (PO Review):</strong>
+    <ul style="margin:0.5rem 0 0 1.5rem;color:var(--text-muted);font-size:0.85rem;">
+      <li><strong>L1 Referenzpreis:</strong> VWAP ueber alle Kaeufe der Position (DCA-sicher)</li>
+      <li><strong>State Persistence:</strong> L2/L3/L4 in HA persistent storage, ueberlebt Restart</li>
+      <li><strong>Kaskaden-Eskalation:</strong> L3 uebernimmt sofort wenn L2 aktiv und L3-Bedingung eintritt</li>
+      <li><strong>Slippage-Schutz:</strong> &gt;1% geschaetzter Slippage → Limit-Order statt Market</li>
+      <li><strong>Absoluter EUR-Cap:</strong> Zusaetzlich zu %-Limit, default 200 EUR max pro Order</li>
+      <li><strong>Claude-Ausfall:</strong> Conservative Fallback — alle Positionen verkaufen, Cash halten</li>
+    </ul>
+  </div>
 </div>
 
 <div class="card-grid">
@@ -202,8 +213,8 @@
     <tr><th>Regel</th><th>Details</th></tr>
     <tr><td><span class="badge badge-blue">R1</span> Spot Only</td><td>Kein Margin, keine Futures, kein Leverage. Verstoss = System-Shutdown.</td></tr>
     <tr><td><span class="badge badge-blue">R2</span> Timing</td><td>15min–4h randomisiert, max 3 Trades/h, nie 2 Trades innerhalb 60s</td></tr>
-    <tr><td><span class="badge badge-blue">R3</span> Binance Compliance</td><td>LOT_SIZE, MIN_NOTIONAL, PRICE_FILTER. Rate Limits &lt;50%. Exponential Backoff auf 429/418.</td></tr>
-    <tr><td><span class="badge badge-blue">R4</span> Ordergroesse</td><td>Max 10% Portfolio pro Order, Min = Binance MIN_NOTIONAL (~10 USDT), Default-Max 100 USDT</td></tr>
+    <tr><td><span class="badge badge-blue">R3</span> Binance Compliance</td><td>LOT_SIZE, NOTIONAL, PRICE_FILTER. Rate Limits &lt;50% von 6.000 weight/min. Backoff auf 429/418.</td></tr>
+    <tr><td><span class="badge badge-blue">R4</span> Ordergroesse</td><td>Max 10% Portfolio + absoluter EUR-Cap (default 200 EUR). Min = NOTIONAL (~5 USDT)</td></tr>
     <tr><td><span class="badge badge-blue">R5</span> Pair Whitelist</td><td>Nur konfigurierte Paare. Default: BTC/USDT, ETH/USDT, BNB/USDT. Keine Memecoins, min 90 Tage gelistet.</td></tr>
   </table>
 </div>
@@ -322,16 +333,89 @@
   <table>
     <tr><th>Komponente</th><th>Technologie</th></tr>
     <tr><td>Integration</td><td>Python 3.12+ (HA Custom Component)</td></tr>
-    <tr><td>Binance API</td><td><code>python-binance</code> oder raw REST/WebSocket</td></tr>
-    <tr><td>Claude API</td><td><code>anthropic</code> Python SDK — Modell: <code>claude-haiku-4-5-20251001</code></td></tr>
-    <tr><td>News Data</td><td>RSS Feeds, freie Crypto APIs</td></tr>
+    <tr><td>Binance API</td><td><code>binance-connector&gt;=3.0.0</code> (offizielles Binance SDK)</td></tr>
+    <tr><td>Claude API</td><td><code>anthropic&gt;=0.49.0</code> — Modell: <code>claude-haiku-4-5-20251001</code></td></tr>
+    <tr><td>Tech Indicators</td><td><code>pandas-ta</code> (RSI, MACD, Bollinger, EMA)</td></tr>
+    <tr><td>News Data</td><td>RSS via <code>feedparser</code> (CoinDesk, CoinTelegraph, Decrypt)</td></tr>
+    <tr><td>Sentiment</td><td>Alternative.me Fear &amp; Greed Index (free, kein Key)</td></tr>
     <tr><td>Dashboard</td><td>Lovelace YAML + Custom Cards (JS)</td></tr>
     <tr><td>Datenspeicher</td><td>HA Recorder (SQLite/PostgreSQL)</td></tr>
   </table>
 </div>
 
+<!-- ============================================================ -->
+<h2>Wave 0 — Kritische Findings</h2>
+
+<div class="card" style="border-color:var(--red);">
+  <h3 style="color:var(--red);">PO: Offene Fragen (Blocker vor Wave 1)</h3>
+  <table>
+    <tr><th>#</th><th>Frage</th><th>Warum kritisch</th></tr>
+    <tr><td>1</td><td>Nutzt du binance.com oder eine Alternative?</td><td>BaFin-Partner 2023 geschlossen, DE-Zugang regulatorisch grau</td></tr>
+    <tr><td>2</td><td>Erwartete Portfolio-Groesse?</td><td>Beeinflusst ob 10% pro Trade gefaehrlich (5k) oder harmlos (50 EUR) ist</td></tr>
+    <tr><td>3</td><td>HA laeuft auf was? (RPi, NAS, VM?)</td><td>Zuverlaessigkeit, Backup-Strategie, 24/7-Faehigkeit</td></tr>
+    <tr><td>4</td><td>Claude Decision Output Schema festlegen</td><td>JSON-Format fuer action/pair/amount/confidence vor Coding definieren</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h3>PO: MVP Phasenplan</h3>
+  <div style="margin:0.75rem 0;">
+    <span class="badge badge-green">Phase 1 — MVP</span>
+    <span style="color:var(--text-muted);margin-left:0.5rem;">"Safe Foundation"</span>
+  </div>
+  <ul style="margin:0 0 1rem 1.5rem;font-size:0.9rem;">
+    <li>Einzel-Pair (BTC/USDT)</li>
+    <li>Vollstaendiger Stop-Loss Cascade mit persistentem State</li>
+    <li>HA-Restart-Recovery (Order-Check, State-Restore)</li>
+    <li>Claude Decision Engine mit Tech-Indikatoren</li>
+    <li>Basis-Dashboard (Status, Balance, Emergency Stop)</li>
+    <li>Trade Log persistent</li>
+  </ul>
+  <div style="margin:0.75rem 0;">
+    <span class="badge badge-yellow">Phase 2 — Enhanced</span>
+    <span style="color:var(--text-muted);margin-left:0.5rem;">"Full Intelligence"</span>
+  </div>
+  <ul style="margin:0 0 1rem 1.5rem;font-size:0.9rem;">
+    <li>Multi-Pair Whitelist</li>
+    <li>News/RSS + Sentiment Integration</li>
+    <li>Savings Rate + Tax Export CSV</li>
+    <li>Dashboard Panels A+B+C komplett</li>
+  </ul>
+  <div style="margin:0.75rem 0;">
+    <span class="badge badge-purple">Phase 3 — Full</span>
+    <span style="color:var(--text-muted);margin-left:0.5rem;">"Optimization"</span>
+  </div>
+  <ul style="margin:0 0 0 1.5rem;font-size:0.9rem;">
+    <li>Historical Learning + Outcome Tracking</li>
+    <li>Source Weight Anpassung basierend auf Track Record</li>
+    <li>Erweiterter Tax Export (Multi-Jahr)</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h3>Research: Kosten-Schaetzung Claude Haiku</h3>
+  <table>
+    <tr><th>Szenario</th><th>Kosten/Monat</th></tr>
+    <tr><td>Polling alle 60s, mit Prompt Caching</td><td>~$26 (obere Grenze)</td></tr>
+    <tr><td>Nur bei Indikator-Aenderung (empfohlen)</td><td>~$5-10</td></tr>
+    <tr><td>15min-4h randomisiert (wie geplant)</td><td>~$3-8</td></tr>
+  </table>
+  <p style="margin-top:0.5rem;color:var(--text-muted);font-size:0.85rem;">Pricing: $1.00/MTok Input, $5.00/MTok Output. Prompt Caching spart ~90% auf System-Prompt.</p>
+</div>
+
+<div class="card" style="border-color:var(--yellow);">
+  <h3 style="color:var(--yellow);">Risiken (nach Schwere sortiert)</h3>
+  <table>
+    <tr><td><span class="badge badge-red">HOCH</span></td><td>HA-Neustart mid-trade → Doppel-Order ohne korrekten Startup-Check</td></tr>
+    <tr><td><span class="badge badge-red">HOCH</span></td><td>Binance DE regulatorische Beschraenkungen</td></tr>
+    <tr><td><span class="badge badge-yellow">MITTEL</span></td><td>Flash Crash uebersteigt L1-Slippage erheblich</td></tr>
+    <tr><td><span class="badge badge-yellow">MITTEL</span></td><td>Context-Wachstum blaest Claude-Budget nach Monaten auf</td></tr>
+    <tr><td><span class="badge badge-blue">NIEDRIG</span></td><td>USDT De-Peg trifft Savings-Balance</td></tr>
+  </table>
+</div>
+
 <footer>
-  BController — Konzept v1.0 — 2026-04-09 — Jerry0022<br>
+  BController — Konzept v1.1 (Wave 0 konsolidiert) — 2026-04-09 — Jerry0022<br>
   Repo: homeassistant-bcontroller
 </footer>
 

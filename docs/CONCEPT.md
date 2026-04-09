@@ -147,12 +147,25 @@ Step-by-step instructions directly in the config panel:
 
 | Component | Technology |
 |-----------|-----------|
-| Integration | Python 3.12+ (HA custom component) |
-| Binance API | `python-binance` or raw REST/WebSocket |
-| Claude API | `anthropic` Python SDK |
-| News Data | RSS feeds, free crypto APIs |
+| Integration | Python 3.12+ (HA custom component, HACS-compatible) |
+| Binance API | `binance-connector>=3.0.0` (official Binance SDK) |
+| Claude API | `anthropic>=0.49.0` — Model: `claude-haiku-4-5-20251001` |
+| Tech Indicators | `pandas-ta>=0.3.14b` (RSI, MACD, Bollinger Bands, EMA) |
+| News Data | RSS feeds (CoinDesk, CoinTelegraph, Decrypt) via `feedparser` |
+| Sentiment | Alternative.me Fear & Greed Index (free, no API key) |
+| Price Data | Binance klines (OHLCV) + CoinGecko free tier (market cap context) |
 | Dashboard | Lovelace YAML + custom cards (JS) |
 | Data Storage | HA recorder (SQLite/PostgreSQL) |
+
+## Claude API Cost Estimate
+
+With prompt caching (system prompt >4096 tokens, 5min TTL):
+- ~$0.0006 per decision call (cache hit)
+- ~$0.86/day at 60s polling intervals
+- ~$26/month at full utilization (well within $10/month if polling is
+  reduced to decision-only cycles, not every 60s)
+
+Budget display in dashboard: show actual EUR cost, not "hours equivalent".
 
 ## Data Flow
 
