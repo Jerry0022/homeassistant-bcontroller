@@ -66,6 +66,7 @@ class PortfolioState:
         self.savings_balance: float = 0.0     # locked savings, USDT
         self.portfolio_snapshots: list[PortfolioSnapshot] = []
         self.trade_log: list[TradeRecord] = []
+        self.initial_portfolio_value: float | None = None  # set ONCE, never reset
         self._initialised: bool = False
 
     # ─── Startup recovery (R14, mandatory before any trading) ─────────────
@@ -397,6 +398,7 @@ class PortfolioState:
     def _deserialise_portfolio(self, data: dict) -> None:
         self.cash_balance = data.get("cash_balance", 0.0)
         self.savings_balance = data.get("savings_balance", 0.0)
+        self.initial_portfolio_value = data.get("initial_portfolio_value")
         self.positions = {
             pair: Position.from_dict(pos_data)
             for pair, pos_data in data.get("positions", {}).items()
@@ -412,6 +414,7 @@ class PortfolioState:
             await self._store_portfolio.async_save({
                 "cash_balance": self.cash_balance,
                 "savings_balance": self.savings_balance,
+                "initial_portfolio_value": self.initial_portfolio_value,
                 "positions": {
                     pair: pos.to_dict() for pair, pos in self.positions.items()
                 },

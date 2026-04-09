@@ -153,13 +153,26 @@ class BControllerCoordinator(DataUpdateCoordinator):
         except Exception as exc:
             _LOGGER.error("Startup account check failed: %s", exc)
 
-        # Capture initial portfolio value for L4 total-drawdown reference
-        if self._initial_portfolio_value is None and self.portfolio:
+        # Restore or capture initial portfolio value for L4 total-drawdown.
+        # This value is set ONCE on the very first run and NEVER recalculated.
+        # It survives all restarts, reloads, and reconfigurations via HA Store.
+        if self.portfolio and self.portfolio.initial_portfolio_value is not None:
+            self._initial_portfolio_value = self.portfolio.initial_portfolio_value
+            _LOGGER.info(
+                "Initial portfolio value restored from store: %.2f USDT",
+                self._initial_portfolio_value,
+            )
+        elif self.portfolio:
+            # First ever run — capture and persist permanently
             try:
                 price_map = await self._build_price_map()
-                self._initial_portfolio_value = self.portfolio.get_total_value(price_map)
+                value = self.portfolio.get_total_value(price_map)
+                self._initial_portfolio_value = value
+                self.portfolio.initial_portfolio_value = value
+                await self.portfolio._async_save_portfolio()
                 _LOGGER.info(
-                    "Initial portfolio value set to %.2f USDT",
+                    "Initial portfolio value set for the FIRST TIME: %.2f USDT "
+                    "(persisted permanently, will never be recalculated)",
                     self._initial_portfolio_value,
                 )
             except Exception as exc:

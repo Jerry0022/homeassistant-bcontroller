@@ -134,6 +134,55 @@ Every decision is logged with:
 
 ---
 
+## Persistence & Restart Robustness
+
+### R16 — State Persistence Convention
+
+All runtime state MUST survive HA restarts, YAML reloads, and integration
+reconfigurations. Nothing critical may live only in-memory.
+
+**Persisted via HA Store (`.storage/`):**
+- `bcontroller_portfolio`: positions, balances, snapshots, initial_portfolio_value
+- `bcontroller_risk`: L2/L3/L4 trigger states and timestamps
+- `bcontroller_trade_log`: complete trade history
+
+**"Set once, never reset" values:**
+- `initial_portfolio_value`: Captured on the VERY FIRST RUN EVER. Persisted
+  permanently in the portfolio store. Never recalculated on restart, reload,
+  or reconfiguration. This is the L4 baseline — if it were recalculated after
+  a drawdown, the stop-loss protection would be weaker than intended.
+- The only way to reset this value is a manual "factory reset" action in the
+  dashboard (not yet implemented — deliberate friction).
+
+**Startup recovery sequence (R14):**
+Every restart runs the full recovery BEFORE any trading:
+1. Load persisted portfolio state (positions, balances, initial_portfolio_value)
+2. Load persisted risk state (L2/L3/L4 triggers)
+3. Query Binance for open orders → reconcile with local state
+4. Sync account balances from Binance
+5. Only then: resume decision cycles (or stay halted if L4 persisted)
+
+**Convention for new state fields:**
+- If a value affects trading decisions or risk → persist in HA Store
+- If a value is informational only (sensor display) → in-memory is OK
+- If a value should survive a "clean reinstall" → consider storing on Binance
+  side (e.g., using order clientOrderId as marker)
+
+### R17 — Binance Sub-Account Isolation
+
+BController operates on a dedicated Binance Sub-Account. This provides:
+- Natural budget isolation — only the funds transferred to the sub-account
+  are available for trading
+- No interference with manual trades on the main account
+- Clean audit trail (all sub-account transactions are BController's)
+- API keys are scoped to the sub-account
+
+The integration does NOT ask for a "trading budget" parameter. The
+sub-account balance IS the budget. To add capital: transfer USDT to the
+sub-account. To withdraw profits: transfer from sub-account to main.
+
+---
+
 ## Operational Rules
 
 ### R13 — Binance API Key Security
