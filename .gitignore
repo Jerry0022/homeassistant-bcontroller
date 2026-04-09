@@ -1,0 +1,226 @@
+# =============================================================================
+# Dependencies
+# =============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+.installed.cfg
+MANIFEST
+.eggs/
+develop-eggs/
+wheels/
+share/python-wheels/
+
+# =============================================================================
+# Build output
+# =============================================================================
+build/
+dist/
+sdist/
+downloads/
+eggs/
+lib/
+lib64/
+parts/
+var/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# =============================================================================
+# Runtime / cache
+# =============================================================================
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+.ruff_cache/
+cython_debug/
+.pytest_cache/
+.hypothesis/
+.cache
+__pypackages__/
+.pybuilder/
+target/
+celerybeat-schedule
+celerybeat.pid
+*.sage.py
+
+# Jupyter
+.ipynb_checkpoints
+profile_default/
+ipython_config.py
+
+# =============================================================================
+# Environment / secrets — NEVER commit
+# =============================================================================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+credentials.json
+service-account*.json
+.venv
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+local_settings.py
+
+# =============================================================================
+# Test / coverage
+# =============================================================================
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+cover/
+
+# =============================================================================
+# AI tooling — session state (never track)
+# =============================================================================
+.claude/worktrees/
+.claude/todos/
+.claude/plans/
+.claude/projects/
+.claude/session-env/
+.claude/shell-snapshots/
+.claude/backups/
+.claude/telemetry/
+.claude/token-cache/
+.claude/.cache/
+.claude/*.log
+
+# =============================================================================
+# OS / editor
+# =============================================================================
+
+### IntelliJ ###
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/dictionaries
+.idea/**/shelf
+.idea/**/aws.xml
+.idea/**/contentModel.xml
+.idea/**/dataSources/
+.idea/**/dataSources.ids
+.idea/**/dataSources.local.xml
+.idea/**/sqlDataSources.xml
+.idea/**/dynamic.xml
+.idea/**/uiDesigner.xml
+.idea/**/dbnavigator.xml
+.idea/**/gradle.xml
+.idea/**/libraries
+.idea/**/mongoSettings.xml
+.idea/replstate.xml
+.idea/sonarlint/
+.idea/**/sonarlint/
+.idea/**/sonarIssues.xml
+.idea/**/markdown-navigator.xml
+.idea/**/markdown-navigator-enh.xml
+.idea/**/markdown-navigator/
+.idea/$CACHE_FILE$
+.idea/codestream.xml
+.idea/**/azureSettings.xml
+.idea/httpRequests
+.idea/caches/build_file_checksums.ser
+cmake-build-*/
+*.iws
+out/
+.idea_modules/
+atlassian-ide-plugin.xml
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
+fabric.properties
+
+### VS Code ###
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+.history/
+.history
+.ionide
+*.vsix
+
+### macOS ###
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+*.icloud
+
+### Linux ###
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+### Windows ###
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# =============================================================================
+# Project-specific
+# =============================================================================
+*.log
+db.sqlite3
+db.sqlite3-journal
+/site
+.pdm.toml
+poetry.toml
+pyrightconfig.json
+pip-log.txt
+pip-delete-this-directory.txt
+*.mo
+*.pot
+docs/_build/
+.scrapy
+instance/
+.webassets-cache
+.spyderproject
+.spyproject
+.ropeproject

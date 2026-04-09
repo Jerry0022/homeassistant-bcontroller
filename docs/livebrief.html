@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BController — Konzept & Regeln</title>
+<style>
+  :root {
+    --bg: #0d1117; --surface: #161b22; --border: #30363d;
+    --text: #e6edf3; --text-muted: #8b949e; --accent: #58a6ff;
+    --green: #3fb950; --red: #f85149; --yellow: #d29922; --purple: #bc8cff;
+    --orange: #f0883e;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 2rem; max-width: 1200px; margin: 0 auto; }
+  h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+  h2 { font-size: 1.4rem; margin: 2rem 0 1rem; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+  h3 { font-size: 1.1rem; margin: 1.5rem 0 0.5rem; color: var(--purple); }
+  .subtitle { color: var(--text-muted); margin-bottom: 2rem; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin: 1rem 0; }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1rem; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+  .badge-green { background: rgba(63,185,80,0.2); color: var(--green); }
+  .badge-red { background: rgba(248,81,73,0.2); color: var(--red); }
+  .badge-yellow { background: rgba(210,153,34,0.2); color: var(--yellow); }
+  .badge-blue { background: rgba(88,166,255,0.2); color: var(--accent); }
+  .badge-purple { background: rgba(188,140,255,0.2); color: var(--purple); }
+  table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; }
+  th, td { padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+  th { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .cascade { display: flex; flex-direction: column; gap: 0.5rem; }
+  .cascade-level { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1rem; border-radius: 6px; border-left: 4px solid; }
+  .cascade-l1 { border-color: var(--yellow); background: rgba(210,153,34,0.08); }
+  .cascade-l2 { border-color: var(--orange); background: rgba(240,136,62,0.08); }
+  .cascade-l3 { border-color: var(--red); background: rgba(248,81,73,0.08); }
+  .cascade-l4 { border-color: #f00; background: rgba(255,0,0,0.12); }
+  .cascade-trigger { font-weight: 600; min-width: 160px; }
+  .cascade-action { color: var(--text-muted); }
+  .flow-step { display: flex; align-items: flex-start; gap: 1rem; margin: 0.5rem 0; }
+  .flow-num { background: var(--accent); color: var(--bg); width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; }
+  .flow-text { padding-top: 3px; }
+  .highlight { background: rgba(88,166,255,0.15); border: 1px solid rgba(88,166,255,0.3); border-radius: 6px; padding: 1rem 1.25rem; margin: 1rem 0; }
+  .weight-bar { display: flex; height: 24px; border-radius: 4px; overflow: hidden; margin: 0.5rem 0; }
+  .weight-bar div { display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600; }
+  .w-news { background: var(--accent); }
+  .w-trend { background: var(--green); }
+  .w-reco { background: var(--purple); }
+  .w-history { background: var(--orange); }
+  code { background: rgba(110,118,129,0.2); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+  .arch-diagram { font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 0.85rem; color: var(--accent); white-space: pre; line-height: 1.4; overflow-x: auto; padding: 1rem; }
+  .section-toggle { cursor: pointer; user-select: none; }
+  .section-toggle::before { content: ''; display: inline-block; width: 0; height: 0; border-left: 6px solid var(--text-muted); border-top: 5px solid transparent; border-bottom: 5px solid transparent; margin-right: 8px; transition: transform 0.2s; }
+  .section-toggle.open::before { transform: rotate(90deg); }
+  .collapsible { overflow: hidden; transition: max-height 0.3s ease; }
+  .tax-box { background: rgba(63,185,80,0.08); border: 1px solid rgba(63,185,80,0.3); border-radius: 6px; padding: 1rem 1.25rem; margin: 1rem 0; }
+  .tax-field { display: flex; gap: 0.5rem; margin: 0.25rem 0; }
+  .tax-field .label { color: var(--text-muted); min-width: 140px; }
+  .dashboard-preview { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin: 1rem 0; }
+  .dash-panel { background: rgba(88,166,255,0.05); border: 1px dashed var(--border); border-radius: 6px; padding: 1rem; text-align: center; }
+  .dash-panel h4 { color: var(--accent); font-size: 0.85rem; margin-bottom: 0.5rem; }
+  .dash-panel .value { font-size: 1.5rem; font-weight: 700; }
+  .agents-wave { display: flex; align-items: center; gap: 0.75rem; margin: 0.5rem 0; padding: 0.5rem 0; }
+  .wave-label { background: var(--accent); color: var(--bg); padding: 2px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; min-width: 60px; text-align: center; }
+  .wave-agents { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.85rem; text-align: center; }
+</style>
+</head>
+<body>
+
+<h1>BController</h1>
+<p class="subtitle">Home Assistant Custom Integration — Autonomes Crypto Spot Trading mit Claude Haiku</p>
+
+<!-- ============================================================ -->
+<h2>Architektur</h2>
+<div class="card">
+<div class="arch-diagram">
+                    Home Assistant (24/7)
+    ┌──────────────────────────────────────────┐
+    │  Dashboard    Integration     Sensors    │
+    │  (Lovelace)◄──(Core)────────►(& Events) │
+    └──────────────────┬───────────────────────┘
+                       │
+         ┌─────────────┼─────────────┐
+         │             │             │
+   ┌─────▼─────┐ ┌────▼────┐ ┌─────▼──────┐
+   │  Binance   │ │ Claude  │ │ News/Data  │
+   │  API       │ │ Haiku   │ │ Sources    │
+   │  (Spot)    │ │ (Brain) │ │ (RSS/Web)  │
+   └───────────┘ └─────────┘ └────────────┘
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2>Claude Haiku — Die Entscheidungsengine</h2>
+
+<div class="highlight">
+  <strong>Strikt verankert:</strong> Modell <code>claude-haiku-4-5-20251001</code> — hardcoded, kein automatisches Upgrade.
+  Claude analysiert nicht nur — Claude <em>trifft die finale Handelsentscheidung</em>.
+</div>
+
+<div class="card">
+  <h3>Datenfluss pro Entscheidungszyklus</h3>
+  <div class="flow-step"><div class="flow-num">1</div><div class="flow-text">Intelligence Engine sammelt + <strong>cached</strong> Daten von allen Quellen lokal</div></div>
+  <div class="flow-step"><div class="flow-num">2</div><div class="flow-text">Risk Manager Pre-Check: Trading erlaubt? (Stop-Loss, Budget, Cooldown)</div></div>
+  <div class="flow-step"><div class="flow-num">3</div><div class="flow-text">Claude Haiku erhaelt <strong>gecachtes Datenbuendel</strong> (News + Trends + Empfehlungen + History)</div></div>
+  <div class="flow-step"><div class="flow-num">4</div><div class="flow-text">Claude trifft die <strong>FINALE Entscheidung</strong>: Buy / Sell / Hold + Pair + Amount + Confidence</div></div>
+  <div class="flow-step"><div class="flow-num">5</div><div class="flow-text">Trading Engine validiert gegen Binance-Regeln und fuehrt aus</div></div>
+  <div class="flow-step"><div class="flow-num">6</div><div class="flow-text">Logging: Entscheidung + Reasoning + Source Weights + Outcome</div></div>
+  <div class="flow-step"><div class="flow-num">7</div><div class="flow-text">Sparquote anwenden wenn Gewinn realisiert</div></div>
+</div>
+
+<div class="card">
+  <h3>API-Budget (5h/Monat Standard)</h3>
+  <table>
+    <tr><th>Prioritaet</th><th>Bereich</th><th>Budget</th></tr>
+    <tr><td><span class="badge badge-red">P0</span></td><td>Emergency Risk Checks + Stop-Loss</td><td><strong>Unlimited</strong> (bypasses limit)</td></tr>
+    <tr><td><span class="badge badge-yellow">P1</span></td><td>Trade-Entscheidungen (Claudes Kernfunktion)</td><td>60%</td></tr>
+    <tr><td><span class="badge badge-blue">P2</span></td><td>Marktanalyse / News</td><td>30%</td></tr>
+    <tr><td><span class="badge badge-purple">P3</span></td><td>Historisches Lernen</td><td>10%</td></tr>
+  </table>
+  <p style="margin-top:0.75rem;color:var(--text-muted);">Budget erschoepft → Monitoring-Modus, keine neuen Trades. Risk-Checks laufen IMMER.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2>Quellengewichtung</h2>
+
+<div class="card">
+  <p>Jede Entscheidung basiert auf mindestens 3 Quellen. Keine Quelle darf 0% oder 100% haben.</p>
+  <div class="weight-bar" style="margin-top:1rem;">
+    <div class="w-news" style="width:25%">News 25%</div>
+    <div class="w-trend" style="width:30%">Trends 30%</div>
+    <div class="w-reco" style="width:20%">Empf. 20%</div>
+    <div class="w-history" style="width:25%">History 25%</div>
+  </div>
+  <p style="color:var(--text-muted);font-size:0.85rem;margin-top:0.5rem;">Beispielverteilung — tatsaechliche Gewichte variieren pro Entscheidung (min 10%, max 40% je Quelle)</p>
+  <table style="margin-top:1rem;">
+    <tr><th>Quelle</th><th>Beispiele</th><th>Min</th><th>Max</th></tr>
+    <tr><td>General News</td><td>Reuters, Bloomberg RSS, CoinDesk</td><td>10%</td><td>40%</td></tr>
+    <tr><td>Trend Analysis</td><td>Technische Indikatoren, Volumen, Momentum</td><td>10%</td><td>40%</td></tr>
+    <tr><td>Crypto Empfehlungen</td><td>Analysten-Ratings, Social Sentiment</td><td>10%</td><td>40%</td></tr>
+    <tr><td>Historical Learning</td><td>Eigene Trade-History, Pattern Recognition</td><td>10%</td><td>40%</td></tr>
+  </table>
+</div>
+
+<!-- ============================================================ -->
+<h2>Risk Management</h2>
+
+<div class="card">
+  <h3>Stop-Loss Kaskade (nicht deaktivierbar)</h3>
+  <div class="cascade">
+    <div class="cascade-level cascade-l1">
+      <span class="badge badge-yellow">L1</span>
+      <span class="cascade-trigger">Einzeltrade -3%</span>
+      <span class="cascade-action">→ Position sofort schliessen</span>
+    </div>
+    <div class="cascade-level cascade-l2">
+      <span class="badge badge-yellow">L2</span>
+      <span class="cascade-trigger">Portfolio -5% in 1h</span>
+      <span class="cascade-action">→ Trading 2h pausieren</span>
+    </div>
+    <div class="cascade-level cascade-l3">
+      <span class="badge badge-red">L3</span>
+      <span class="cascade-trigger">Portfolio -8% in 24h</span>
+      <span class="cascade-action">→ Trading bis naechsten Tag stoppen</span>
+    </div>
+    <div class="cascade-level cascade-l4">
+      <span class="badge badge-red">L4</span>
+      <span class="cascade-trigger">Portfolio -15% gesamt</span>
+      <span class="cascade-action">→ <strong>VOLLSTOPP</strong> — manueller Restart noetig</span>
+    </div>
+  </div>
+  <p style="margin-top:1rem;color:var(--text-muted);">Levels konfigurierbar, aber mit Hard-Minimums: L1 min -2%, L4 min -10%. Komplett deaktivieren ist nicht moeglich.</p>
+</div>
+
+<div class="card-grid">
+  <div class="card">
+    <h3>Kapitalschutz</h3>
+    <ul style="list-style:none;padding:0;">
+      <li>- Max 80% investiert, 20% Cash-Reserve (USDT)</li>
+      <li>- Max 10% pro Einzelorder</li>
+      <li>- Nach L2/L3: Positionsgroesse -50% fuer 24h</li>
+      <li>- Nach L4: Review-Phase + manueller Restart</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>Sparquote</h3>
+    <ul style="list-style:none;padding:0;">
+      <li>- 0-20% des realisierten Gewinns</li>
+      <li>- Sofort bei Gewinnrealisierung angewandt</li>
+      <li>- Read-only fuer Trading Engine</li>
+      <li>- Anzeige in EUR, Auszahlung nur manuell</li>
+      <li>- Gehalten als USDT/USDC (Stablecoin)</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>Trading-Regeln</h2>
+
+<div class="card">
+  <table>
+    <tr><th>Regel</th><th>Details</th></tr>
+    <tr><td><span class="badge badge-blue">R1</span> Spot Only</td><td>Kein Margin, keine Futures, kein Leverage. Verstoss = System-Shutdown.</td></tr>
+    <tr><td><span class="badge badge-blue">R2</span> Timing</td><td>15min–4h randomisiert, max 3 Trades/h, nie 2 Trades innerhalb 60s</td></tr>
+    <tr><td><span class="badge badge-blue">R3</span> Binance Compliance</td><td>LOT_SIZE, MIN_NOTIONAL, PRICE_FILTER. Rate Limits &lt;50%. Exponential Backoff auf 429/418.</td></tr>
+    <tr><td><span class="badge badge-blue">R4</span> Ordergroesse</td><td>Max 10% Portfolio pro Order, Min = Binance MIN_NOTIONAL (~10 USDT), Default-Max 100 USDT</td></tr>
+    <tr><td><span class="badge badge-blue">R5</span> Pair Whitelist</td><td>Nur konfigurierte Paare. Default: BTC/USDT, ETH/USDT, BNB/USDT. Keine Memecoins, min 90 Tage gelistet.</td></tr>
+  </table>
+</div>
+
+<!-- ============================================================ -->
+<h2>Dashboard Panels</h2>
+
+<div class="dashboard-preview">
+  <div class="dash-panel">
+    <h4>Panel A</h4>
+    <div style="font-size:0.85rem;color:var(--text-muted);">Config</div>
+    <div style="font-size:0.8rem;margin-top:0.5rem;text-align:left;">
+      - Binance API Key<br>
+      - Claude API Key<br>
+      - Usage Limit<br>
+      - Pair Whitelist<br>
+      - Risk Parameter<br>
+      - <strong>Setup-Guide</strong><br>
+      - <strong>Steuerexport</strong>
+    </div>
+  </div>
+  <div class="dash-panel">
+    <h4>Panel B</h4>
+    <div style="font-size:0.85rem;color:var(--text-muted);">Portfolio</div>
+    <div class="value" style="color:var(--green);">1.234,56 EUR</div>
+    <div style="font-size:0.8rem;margin-top:0.5rem;text-align:left;">
+      - Sparquote: 45,20 EUR<br>
+      - Performance 24h/7d/30d<br>
+      - P&L Chart<br>
+      - Aktive Positionen
+    </div>
+  </div>
+  <div class="dash-panel">
+    <h4>Panel C</h4>
+    <div style="font-size:0.85rem;color:var(--text-muted);">Entscheidungen</div>
+    <div style="font-size:0.8rem;margin-top:0.5rem;text-align:left;">
+      - Timeline aller Trades<br>
+      - Source Weights pro Trade<br>
+      - Confidence Score<br>
+      - Claude Reasoning<br>
+      - Outcome Tracking
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>Steuer-Compliance (Deutschland)</h2>
+
+<div class="tax-box">
+  <h3 style="color:var(--green);">Finanzamt-Export direkt aus dem Dashboard</h3>
+  <p style="margin:0.75rem 0;">Ein-Klick-Download: CSV-Datei fuer die Anlage SO der Einkommensteuererklaerung.</p>
+  <div class="tax-field"><span class="label">Felder:</span><span>Datum, Coin, Kauf/Verkauf, Menge, Kurs EUR, Gebuehren EUR, G/V EUR</span></div>
+  <div class="tax-field"><span class="label">Methode:</span><span>FIFO (Anschaffungskosten-Berechnung)</span></div>
+  <div class="tax-field"><span class="label">Summary:</span><span>Gesamtgewinn, Gesamtverlust, Saldo</span></div>
+  <div class="tax-field"><span class="label">Freigrenze:</span><span>Hinweis wenn Gewinne &lt; 1.000 EUR (seit 2024)</span></div>
+  <div class="tax-field"><span class="label">ELSTER:</span><span>Sonstige Einkuenfte → Private Veraeusserungsgeschaefte (Zeile 41-46)</span></div>
+  <p style="margin-top:1rem;color:var(--text-muted);font-size:0.85rem;">
+    Alle Crypto-Trades mit Haltefrist &lt;1 Jahr sind steuerpflichtig (§ 23 EStG).
+    Da BController aktiv handelt, sind grundsaetzlich alle Gewinne steuerpflichtig.
+    Trade-Logs werden 10 Jahre aufbewahrt (Aufbewahrungspflicht).
+  </p>
+</div>
+
+<!-- ============================================================ -->
+<h2>Binance API Key — Setup-Anleitung</h2>
+
+<div class="card">
+  <div class="flow-step"><div class="flow-num">1</div><div class="flow-text">Einloggen auf <strong>binance.com</strong> → API Management</div></div>
+  <div class="flow-step"><div class="flow-num">2</div><div class="flow-text">Neuen API Key erstellen, Label: <code>BController</code></div></div>
+  <div class="flow-step"><div class="flow-num">3</div><div class="flow-text"><strong>Nur "Spot Trading"</strong> aktivieren — sonst nichts!</div></div>
+  <div class="flow-step"><div class="flow-num">4</div><div class="flow-text"><span class="badge badge-red">KRITISCH</span> "Enable Withdrawals" <strong>DEAKTIVIERT</strong> lassen</div></div>
+  <div class="flow-step"><div class="flow-num">5</div><div class="flow-text">IP-Whitelist auf die IP des HA-Servers setzen (empfohlen)</div></div>
+  <div class="flow-step"><div class="flow-num">6</div><div class="flow-text">API Key + Secret in das BController Config-Panel eingeben</div></div>
+</div>
+
+<!-- ============================================================ -->
+<h2>Agenten-Orchestrierung (Implementierung)</h2>
+
+<div class="card">
+  <div class="agents-wave">
+    <span class="wave-label">Wave 0</span>
+    <div class="wave-agents">
+      <span class="badge badge-blue">research</span>
+      <span class="badge badge-purple">po</span>
+    </div>
+    <span style="color:var(--text-muted);font-size:0.85rem;">HA Integration Patterns, Binance API, Konzept-Review</span>
+  </div>
+  <div class="agents-wave">
+    <span class="wave-label">Wave 1</span>
+    <div class="wave-agents">
+      <span class="badge badge-green">core</span>
+    </div>
+    <span style="color:var(--text-muted);font-size:0.85rem;">Integration Boilerplate, Trading Engine, Risk Manager, Interfaces</span>
+  </div>
+  <div class="agents-wave">
+    <span class="wave-label">Wave 2</span>
+    <div class="wave-agents">
+      <span class="badge badge-yellow">ai</span>
+      <span class="badge badge-yellow">frontend</span>
+    </div>
+    <span style="color:var(--text-muted);font-size:0.85rem;">Claude Decision Engine + Lovelace Dashboard (parallel)</span>
+  </div>
+  <div class="agents-wave">
+    <span class="wave-label">Wave 3</span>
+    <div class="wave-agents">
+      <span class="badge badge-red">qa</span>
+    </div>
+    <span style="color:var(--text-muted);font-size:0.85rem;">Tests, Mocks, Verifikation</span>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>Tech Stack</h2>
+
+<div class="card">
+  <table>
+    <tr><th>Komponente</th><th>Technologie</th></tr>
+    <tr><td>Integration</td><td>Python 3.12+ (HA Custom Component)</td></tr>
+    <tr><td>Binance API</td><td><code>python-binance</code> oder raw REST/WebSocket</td></tr>
+    <tr><td>Claude API</td><td><code>anthropic</code> Python SDK — Modell: <code>claude-haiku-4-5-20251001</code></td></tr>
+    <tr><td>News Data</td><td>RSS Feeds, freie Crypto APIs</td></tr>
+    <tr><td>Dashboard</td><td>Lovelace YAML + Custom Cards (JS)</td></tr>
+    <tr><td>Datenspeicher</td><td>HA Recorder (SQLite/PostgreSQL)</td></tr>
+  </table>
+</div>
+
+<footer>
+  BController — Konzept v1.0 — 2026-04-09 — Jerry0022<br>
+  Repo: homeassistant-bcontroller
+</footer>
+
+<script>
+document.querySelectorAll('.section-toggle').forEach(el => {
+  el.addEventListener('click', () => {
+    el.classList.toggle('open');
+    const target = el.nextElementSibling;
+    if (target && target.classList.contains('collapsible')) {
+      target.style.maxHeight = el.classList.contains('open') ? target.scrollHeight + 'px' : '0';
+    }
+  });
+});
+</script>
+</body>
+</html>
