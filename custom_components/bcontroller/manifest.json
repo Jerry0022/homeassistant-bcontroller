@@ -1,20 +1,20 @@
 {
   "domain": "bcontroller",
   "name": "BController",
-  "version": "0.1.0",
-  "config_flow": true,
-  "documentation": "https://github.com/Jerry0022/homeassistant-bcontroller",
-  "issue_tracker": "https://github.com/Jerry0022/homeassistant-bcontroller/issues",
   "codeowners": ["@Jerry0022"],
-  "requirements": [
-    "binance-connector>=3.0.0",
-    "anthropic>=0.49.0",
-    "pandas-ta>=0.3.14b",
-    "feedparser>=6.0.0",
-    "ha-customapps @ https://github.com/Jerry0022/homeassistant-customapps/archive/refs/tags/v0.2.0.zip"
-  ],
+  "config_flow": true,
   "dependencies": [],
-  "iot_class": "cloud_polling",
+  "documentation": "https://github.com/Jerry0022/homeassistant-bcontroller",
   "integration_type": "service",
-  "single_config_entry": true
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/Jerry0022/homeassistant-bcontroller/issues",
+  "requirements": [
+    "anthropic>=0.49.0",
+    "binance-connector>=3.0.0",
+    "feedparser>=6.0.0",
+    "ha-customapps>=0.2.0",
+    "pandas-ta>=0.3.14b"
+  ],
+  "single_config_entry": true,
+  "version": "0.1.0"
 }
