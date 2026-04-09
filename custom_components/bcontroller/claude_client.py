@@ -239,23 +239,20 @@ class ClaudeClient:
     def _sync_call(
         self, system_content: list[dict], messages: list[dict]
     ) -> Any:
-        """Execute the synchronous Anthropic API call (runs in executor thread)."""
+        """Execute the synchronous Anthropic API call (runs in executor thread).
+
+        NOTE: Structured JSON output is enforced via the system prompt (R12).
+        The Anthropic Python SDK does not have an "output_config" parameter -
+        that would require the tool-use pattern which changes the response shape.
+        The system prompt instructs Claude to output only valid JSON, and the
+        caller parses response.content[0].text via json.loads().
+        """
         client = self._get_client()
         response = client.messages.create(
             model=MODEL_ID,
             max_tokens=512,
             system=system_content,
             messages=messages,
-            output_config={
-                "format": {
-                    "type": "json_schema",
-                    "json_schema": {
-                        "name": "trading_decision",
-                        "strict": True,
-                        "schema": _TRADING_DECISION_SCHEMA,
-                    },
-                }
-            },
         )
         return response
 

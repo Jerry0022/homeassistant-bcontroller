@@ -75,10 +75,12 @@ class RiskManager:
         self._store: Store = Store(hass, STORAGE_VERSION, STORAGE_KEY_RISK)
 
         # Clamp to hard minimums (R6)
-        self.stop_loss_l1 = max(stop_loss_l1, MIN_STOP_LOSS_L1)
+        # Use min() because thresholds are negative: min(-1, -2) = -2 (stricter)
+        # This prevents setting a threshold looser than the hard minimum.
+        self.stop_loss_l1 = min(stop_loss_l1, MIN_STOP_LOSS_L1)
         self.stop_loss_l2 = stop_loss_l2
         self.stop_loss_l3 = stop_loss_l3
-        self.stop_loss_l4 = max(stop_loss_l4, MIN_STOP_LOSS_L4)
+        self.stop_loss_l4 = min(stop_loss_l4, MIN_STOP_LOSS_L4)
         self.savings_rate = min(savings_rate, 20.0)
         self.cash_reserve_pct = cash_reserve_pct
 

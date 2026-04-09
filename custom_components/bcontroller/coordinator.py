@@ -490,13 +490,16 @@ class BControllerCoordinator(DataUpdateCoordinator):
             if decision.action == "BUY":
                 await self.portfolio.open_position(pair, fill_qty, fill_price)
             else:
+                # Capture VWAP before close (position may be deleted by close_position)
+                vwap_before_close = (
+                    self.portfolio.positions[pair].vwap_entry_price
+                    if pair in self.portfolio.positions else fill_price
+                )
                 pnl = await self.portfolio.close_position(pair, fill_qty, fill_price)
                 record.pnl = pnl
                 record.pnl_pct = (
-                    ((fill_price - self.portfolio.positions.get(pair, None) and
-                      self.portfolio.positions[pair].vwap_entry_price or fill_price)
-                     / fill_price) * 100.0
-                    if pnl != 0 else 0.0
+                    ((fill_price - vwap_before_close) / vwap_before_close) * 100.0
+                    if pnl != 0 and vwap_before_close > 0 else 0.0
                 )
                 savings_amount = self.risk.apply_savings_rate(max(pnl, 0.0))
                 if savings_amount > 0:
