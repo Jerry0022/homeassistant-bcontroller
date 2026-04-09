@@ -1,0 +1,7 @@
+title: BController
+views:
+  - title: BController
+    path: bcontroller
+    icon: mdi:bitcoin
+    cards:
+      - type: custom:bcontroller-card
