@@ -39,6 +39,7 @@ from .const import (
     CONF_MAX_TRADE_USDT,
     CONF_CLAUDE_BUDGET_USD,
     DATA_BINANCE_CLIENT,
+    DEFAULT_CLAUDE_BUDGET_USD,
     DATA_PORTFOLIO,
     DATA_RISK_MANAGER,
     DEFAULT_PAIR_WHITELIST,
@@ -56,6 +57,8 @@ from .const import (
     TRADE_MIN_INTERVAL_SEC,
     TRADE_MAX_INTERVAL_SEC,
 )
+from .claude_client import ClaudeClient
+from .intelligence import IntelligenceEngine
 from .models import TradingDecision
 from .portfolio import PortfolioState
 from .risk import RiskManager, TradeBlockedError
@@ -84,6 +87,7 @@ class BControllerCoordinator(DataUpdateCoordinator):
         self.binance: BinanceClient | None = None
         self.portfolio: PortfolioState | None = None
         self.risk: RiskManager | None = None
+        self.intelligence: IntelligenceEngine | None = None
 
         # Trade timing state (R2)
         self._last_trade_time: float = 0.0
@@ -109,6 +113,18 @@ class BControllerCoordinator(DataUpdateCoordinator):
             hass=self.hass,
             api_key=data[CONF_BINANCE_API_KEY],
             api_secret=data[CONF_BINANCE_API_SECRET],
+        )
+
+        # Build Claude client and intelligence engine
+        claude_client = ClaudeClient(
+            hass=self.hass,
+            api_key=data[CONF_CLAUDE_API_KEY],
+            budget_usd=float(data.get(CONF_CLAUDE_BUDGET_USD, DEFAULT_CLAUDE_BUDGET_USD)),
+        )
+        self.intelligence = IntelligenceEngine(
+            hass=self.hass,
+            claude_client=claude_client,
+            config=data,
         )
 
         # Build risk manager with configured thresholds
@@ -348,11 +364,33 @@ class BControllerCoordinator(DataUpdateCoordinator):
             )
             return
 
-        # Intelligence module (to be implemented in Wave 2)
-        # decision = await intelligence.get_decision(...)
-        # For now: no-op — coordinator is wired but intelligence not yet present
-        _LOGGER.debug("Decision cycle: intelligence module not yet available.")
+        if self.intelligence is None:
+            _LOGGER.error("Intelligence engine not initialised — skipping decision cycle")
+            return
 
+        # Fetch klines for the primary pair (first in whitelist)
+        pair_whitelist = self._entry.data.get(CONF_PAIR_WHITELIST, DEFAULT_PAIR_WHITELIST)
+        pair = pair_whitelist[0] if pair_whitelist else "BTCUSDT"
+
+        klines: list = []
+        try:
+            klines = await self.binance.get_klines(pair, "1h", limit=100)
+        except Exception as exc:
+            _LOGGER.warning("Could not fetch klines for %s: %s — proceeding without", pair, exc)
+
+        market_data = {
+            "pair": pair,
+            "price_map": price_map,
+            "klines": klines,
+            "usdt_balance": self.portfolio.cash_balance if self.portfolio else 0.0,
+            "positions": self.portfolio.positions if self.portfolio else {},
+            "portfolio_value": self._portfolio_value,
+        }
+
+        decision, source_weights = await self.intelligence.analyze_and_decide(market_data)
+
+        self._last_decision = decision
+        await self._execute_decision(decision, source_weights, price_map)
         self._schedule_next_trade_window()
 
     async def _execute_decision(
