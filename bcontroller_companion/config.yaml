@@ -1,0 +1,23 @@
+name: "BController Companion"
+version: "0.1.0"
+slug: "bcontroller_companion"
+description: >-
+  Companion add-on for BController integration.
+  Installs and updates the custom integration and frontend assets automatically.
+url: "https://github.com/Jerry0022/homeassistant-bcontroller"
+startup: once
+boot: auto
+init: false
+homeassistant: "2024.1.0"
+hassio_api: true
+auth_api: true
+arch:
+  - aarch64
+  - amd64
+  - armhf
+  - armv7
+  - i386
+map:
+  - type: homeassistant_config
+    read_only: false
+    path: /config
